@@ -1,0 +1,671 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#0f172a">
+<title>Personal Budget Tracker V10</title>
+<style>
+:root{
+  --bg:#f8fafc;--card:#fff;--panel:#f1f5f9;--text:#0f172a;--muted:#64748b;
+  --border:#e2e8f0;--accent:#2563eb;--good:#15803d;--bad:#b91c1c;
+  --shadow:0 8px 22px rgba(15,23,42,.07)
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}
+.app{max-width:1200px;margin:auto;padding:18px}
+header{display:flex;justify-content:space-between;align-items:flex-start;gap:14px;flex-wrap:wrap;margin-bottom:14px}
+h1{margin:0;font-size:clamp(25px,4vw,34px)}h2{font-size:18px;margin:0 0 10px}
+.sub{color:var(--muted);margin-top:4px}.small{font-size:12px}.muted{color:var(--muted)}
+.card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:15px;box-shadow:var(--shadow)}
+.grid{display:grid;gap:12px}.g2{grid-template-columns:repeat(2,minmax(0,1fr))}.g3{grid-template-columns:repeat(3,minmax(0,1fr))}.g4{grid-template-columns:repeat(4,minmax(0,1fr))}
+.row{display:flex;gap:10px;align-items:end;flex-wrap:wrap}.field{min-width:170px;flex:1}
+label{display:block;font-size:13px;font-weight:700;margin-bottom:5px}
+input,select,button{font:inherit}
+input,select{width:100%;min-height:44px;padding:11px;border:1px solid var(--border);border-radius:10px;background:#fff;color:var(--text)}
+button{min-height:44px;border:0;border-radius:10px;padding:11px 14px;font-weight:800;cursor:pointer}
+.btn{background:var(--accent);color:#fff}.btn2{background:var(--panel);color:var(--text);border:1px solid var(--border)}.danger{background:#fee2e2;color:#991b1b}
+.kpi{background:#fff;border:1px solid var(--border);border-radius:14px;padding:14px}.kpi small{color:var(--muted)}.kpi strong{display:block;font-size:22px;margin-top:4px}.kpi.over{background:#fef2f2;border-color:#ef4444}.kpi.over strong{color:#b91c1c}
+.fixed-card{margin-bottom:12px;border-left:5px solid #64748b}.fixed-card.goal-met{border-left-color:#15803d;background:#f0fdf4}.fixed-card.goal-missed{border-left-color:#dc2626;background:#fef2f2}.fixed-card.goal-met .goal-status{color:#166534}.fixed-card.goal-missed .goal-status{color:#991b1b}.savings-progress{height:12px;background:#e2e8f0;border-radius:999px;overflow:hidden}.savings-progress>div{height:100%;background:#64748b}.goal-met .savings-progress>div{background:#16a34a}.goal-missed .savings-progress>div{background:#dc2626}
+.progress{height:11px;background:var(--panel);border-radius:999px;overflow:hidden}.progress>div{height:100%;background:var(--accent)}
+.tablewrap{overflow:auto}table{width:100%;border-collapse:collapse;min-width:780px}th,td{padding:10px 7px;border-bottom:1px solid var(--border);font-size:13px;text-align:left}.right{text-align:right}
+.pill{display:inline-block;padding:4px 8px;border-radius:999px;font-size:11px;font-weight:800}.up{background:#fee2e2;color:var(--bad)}.down{background:#dcfce7;color:var(--good)}.same{background:#e2e8f0;color:#475569}
+.suggest{margin-top:6px;padding:10px;border:1px dashed #cbd5e1;border-radius:10px;background:#f8fafc}
+.suggest button{padding:6px 9px;min-height:auto;margin:4px 5px 0 0;background:#e0e7ff;color:#3730a3}
+.warning{color:#92400e;background:#fffbeb;border:1px solid #fde68a;padding:9px 10px;border-radius:10px;margin-top:7px}
+.status{min-height:18px;color:var(--muted);font-size:13px}
+.barrow{display:grid;grid-template-columns:100px 1fr 125px;gap:8px;align-items:center;margin:9px 0}.bar{height:9px;background:var(--panel);border-radius:999px;overflow:hidden}.bar>div{height:100%;background:#60a5fa}
+.hidden{display:none!important}.file-label{display:inline-flex;align-items:center;justify-content:center;border:1px solid var(--border);background:var(--panel);padding:11px 14px;border-radius:10px;font-weight:800;cursor:pointer;min-height:44px}
+.month-chip{display:inline-flex;align-items:center;gap:5px;background:var(--panel);border:1px solid var(--border);border-radius:999px;padding:5px 9px;margin:3px;font-size:12px}
+.compare-table{overflow:auto}.compare-table table{min-width:620px}
+@media(max-width:900px){.g4,.g3{grid-template-columns:repeat(2,minmax(0,1fr))}.g2{grid-template-columns:1fr}}
+@media(max-width:520px){.app{padding:11px}.g4,.g3{grid-template-columns:1fr}.row>*{min-width:100%}}
+.topbar{position:sticky;top:0;z-index:20;background:var(--bg);padding:8px 0;border-bottom:1px solid var(--border);margin-bottom:12px}
+.tb-row{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}.topbar h1{font-size:19px}.ver{font-size:11px;color:var(--muted)}
+.monthnav{display:flex;gap:6px;align-items:center}.monthnav select{width:auto;min-width:150px;font-weight:800}.monthnav button{min-width:44px;padding:0;font-size:20px}
+.topbar .status{margin-top:4px}
+#tabs{display:flex;position:fixed;left:0;right:0;bottom:0;z-index:30;background:#fff;border-top:1px solid var(--border);padding:6px 6px calc(6px + env(safe-area-inset-bottom,0px));gap:4px}
+#tabs button{flex:1;background:transparent;color:var(--muted);min-height:48px;border-radius:12px;font-size:12px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding:4px}
+#tabs button span{font-size:20px;line-height:1}#tabs button.active{background:#dbeafe;color:var(--accent)}
+.tab{display:none}.tab.active{display:block}body{padding-bottom:86px}
+@media(min-width:900px){#tabs{position:static;border:1px solid var(--border);border-radius:14px;margin-bottom:14px;padding:6px}#tabs button{flex-direction:row;font-size:14px;gap:8px}body{padding-bottom:20px}}
+.adv{display:none;order:20}.show-adv .adv{display:block}
+.chip{padding:7px 12px;min-height:38px;background:#e0e7ff;color:#3730a3;margin:3px 6px 3px 0;border-radius:999px}
+.recent{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border)}.recent:last-child{border:0}
+.fam{color:#be185d}.inc{color:var(--good)}
+</style>
+</head>
+<body>
+<div class="app">
+<div class="topbar">
+  <div class="tb-row"><h1>Personal Budget Tracker <span class="ver">V10</span></h1>
+  <div class="monthnav"><button id="prevMonth" class="btn2" type="button" aria-label="Older month">‹</button><select id="month" aria-label="Working month"></select><button id="nextMonth" class="btn2" type="button" aria-label="Newer month">›</button><button id="syncBtn" class="btn2" type="button" style="font-size:13px;padding:0 12px;min-width:0">☁ Set up</button></div></div>
+  <div id="status" class="status" aria-live="polite"></div>
+</div>
+<nav id="tabs"><button type="button" data-go="home" class="active"><span>🏠</span>Home</button><button type="button" data-go="add"><span>➕</span>Add</button><button type="button" data-go="entries"><span>🧾</span>Entries</button><button type="button" data-go="reports"><span>📊</span>Reports</button><button type="button" data-go="settings"><span>⚙️</span>Settings</button></nav>
+<main>
+<div class="tab active" data-tab="home"><div id="backupReminder"></div><section id="todayCard" class="grid g3" style="margin-bottom:12px"></section><section id="kpis" class="grid g4" style="margin-bottom:12px"></section><section class="card" style="margin-bottom:12px">
+  <div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap">
+    <div><h2>Budget progress</h2><div id="budgetText" class="muted small"></div></div>
+    <strong id="budgetPct"></strong>
+  </div>
+  <div class="progress" style="margin-top:10px"><div id="budgetBar"></div></div>
+</section><section class="card" style="margin-bottom:12px"><h2>Category spending & budget limits</h2><div class="muted small" style="margin-bottom:8px">Blue = your spending, pink = family-paid. Red highlight means <b>your</b> spending has crossed that category’s monthly limit (family-paid amounts are not counted against limits). EMI and Pocket Money are available as categories.</div><div id="categoryLegend" class="small" style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:6px"></div><div id="categorySpend"></div></section><section class="card" style="margin-bottom:12px"><div style="display:flex;justify-content:space-between;align-items:center"><h2>Recent entries</h2><button class="btn2" type="button" data-go="entries" style="min-height:36px;padding:6px 10px">View all</button></div><div id="recentList"></div></section></div>
+<div class="tab" data-tab="add"><section class="card" style="margin-bottom:12px">
+  <h2>Add entry</h2><div id="quickChips" style="margin-bottom:10px"></div>
+  <form id="itemForm" class="grid g3"><div id="editBanner" class="warning hidden" style="grid-column:1/-1;order:0;justify-content:space-between;align-items:center;gap:10px;display:flex"><span>✏️ Editing an existing entry</span><button id="cancelEdit" class="btn2" type="button" style="min-height:36px;padding:6px 10px">Cancel</button></div>
+    <div style="order:1"><label>Date</label><input id="date" type="date" required></div>
+    <div style="order:2">
+      <label>Item name</label>
+      <input id="name" type="text" maxlength="70" placeholder="e.g. Salary, Tomato, rent" autocomplete="off">
+      <div id="duplicateBox" class="suggest hidden"></div>
+    </div>
+    <div class="adv"><label>Sub-item name (optional)</label><input id="subItem" type="text" maxlength="70" placeholder="e.g. brand, flavour, specific item"></div>
+    <div class="adv"><label>Entry type</label><select id="entryType"><option value="Expense">Expense</option><option value="EMI Payment">EMI Payment (fixed)</option><option value="Savings / Investment">Savings / Investment</option><option value="Income">Income</option><option value="Credit Taken">Credit Taken</option><option value="Credit Paid">Credit Paid</option><option value="Credit Card Due Paid">Credit Card Due Paid</option></select></div>
+    <div style="order:4"><label>Category</label><select id="category"><option>Fruits</option><option>Vegetables</option><option>Groceries</option><option>Dairy</option><option>Petrol</option><option>Personal</option><option>Pocket Money</option><option>Rent / Housing</option><option>Utilities / Bills</option><option>Transport</option><option>Health / Medical</option><option>Education</option><option>Dining / Takeaway</option><option>Dog / Cat Food</option><option>Shopping</option><option>EMI</option><option>Entertainment</option><option>Savings / Investment</option><option>Other</option></select></div>
+    <div style="order:5"><label>Pay type</label><select id="payType"><option>Cash</option><option>UPI</option><option>Sodexo</option><option>Credit Card</option><option>Bank Debit</option></select></div>
+    <div id="paidByWrap" class="adv"><label>Paid by</label><select id="paidBy"><option value="Me">Me</option><option value="Family member">Family member</option></select></div>
+    <div id="familyMemberWrap" class="hidden adv"><label>Family member name</label><input id="familyMember" type="text" maxlength="70" placeholder="e.g. spouse, parent"></div>
+    <div class="adv"><label>Quantity</label><input id="qty" type="number" min=".01" step=".01" value="1"></div>
+    <div class="adv"><label>Unit</label><select id="unit"><option>kg</option><option>g</option><option>L</option><option>pack</option><option>piece</option><option value="No unit">No unit</option></select></div>
+    <div style="order:3"><label id="priceLabel">Total price (₹)</label><input id="price" type="number" min="0" step=".01" required placeholder="Total paid for this item"></div>
+    <div style="display:flex;align-items:end;order:6"><button id="submitBtn" class="btn" type="submit" style="width:100%">Add Item</button></div><div style="grid-column:1/-1;order:7"><button id="advToggle" class="btn2" type="button">More options ▾</button> <span class="small muted">entry type, quantity / unit, sub-item, family-paid</span></div>
+  </form>
+  <details style="margin-top:8px"><summary class="small muted" style="cursor:pointer">How entries are counted</summary><div class="muted small" style="margin-top:8px">Enter the total amount you paid for the full quantity. The app calculates the per-kg/litre/pack/piece rate automatically and uses the total price for all spending calculations.</div>
+  <div class="muted small" style="margin-top:8px">For non-item transactions, choose EMI Payment or Savings / Investment to track fixed commitments separately from expenses, or choose Income, Credit Taken, Credit Paid, or Credit Card Due Paid. Use Credit Card as Pay type for card purchases; record bill repayments as Credit Card Due Paid so the outstanding card balance falls without counting the repayment as a second expense. These use one transaction amount and No unit automatically. EMI and savings/investment contributions reduce available cash but are excluded from expense totals. Salary and allocated budget are tracked separately. Credit taken and credit paid only update the outstanding credit balance; they do not change salary left or budget left.</div>
+  </details><div id="duplicateWarning" class="warning hidden"></div>
+</section></div>
+<div class="tab" data-tab="entries"><section style="margin-bottom:12px">
+  <div class="card">
+    <h2>Shopping list</h2>
+    <div class="row" style="margin-bottom:9px">
+      <div class="field"><input id="search" type="search" placeholder="Search item..."></div>
+      <div class="field"><select id="filter"><option>All</option><option>Fruits</option><option>Vegetables</option><option>Groceries</option><option>Dairy</option><option>Petrol</option><option>Personal</option><option>Pocket Money</option><option>Rent / Housing</option><option>Utilities / Bills</option><option>Transport</option><option>Health / Medical</option><option>Education</option><option>Dining / Takeaway</option><option>Dog / Cat Food</option><option>Shopping</option><option>EMI</option><option>Entertainment</option><option>Savings / Investment</option><option>Credit</option><option>Other</option></select></div>
+    </div>
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th>Date</th><th>Type</th><th>Item / Sub-item</th><th>Category</th><th>Paid by</th><th>Pay type</th><th class="right">Qty</th><th class="right">Total price</th><th class="right">Rate / kg, L, pack, piece</th><th></th></tr></thead>
+        <tbody id="tbody"></tbody>
+      </table>
+    </div>
+  </div>
+</section></div>
+<div class="tab" data-tab="reports"><section id="fixedCommitments" class="card fixed-card" style="margin-bottom:12px">
+  <h2>Fixed commitments & savings</h2>
+  <div class="muted small" style="margin-bottom:12px">EMI and savings/investment contributions are tracked separately from expenses. They still reduce the money available for the month.</div>
+  <div id="fixedSummary" class="grid g4"></div>
+  <div class="grid g2" style="margin-top:14px;align-items:end">
+    <div class="field"><label for="savingsTarget">Monthly savings & investment target (₹)</label><input id="savingsTarget" type="number" min="0" step="100" placeholder="e.g. 10000"></div>
+    <button id="saveSavingsTarget" class="btn2" type="button">Save Monthly Target</button>
+  </div>
+  <div class="savings-progress" style="margin-top:13px"><div id="savingsBar" style="width:0%"></div></div>
+  <div id="savingsStatus" class="small goal-status" style="margin-top:8px">Set a target to start tracking savings progress.</div>
+</section><section class="card" style="margin-bottom:12px">
+  <h2>Family-paid expenses · monthly overview</h2>
+  <div class="muted small" style="margin-bottom:10px">Family-paid expenses are included in household spending but excluded from your personal budget-left and salary-left calculations.</div>
+  <div id="familyExpenseSummary" class="grid g3" style="margin-bottom:12px"></div>
+  <div class="tablewrap"><table style="min-width:650px"><thead><tr><th>Date</th><th>Item</th><th>Category</th><th>Paid by</th><th class="right">Amount</th></tr></thead><tbody id="familyPaidBody"></tbody></table></div>
+</section><section class="card" style="margin-bottom:12px">
+  <h2>Category budgets vs monthly allocation</h2>
+  <div class="muted small" style="margin-bottom:10px">Compare the sum of all category monthly limits with your overall allocated monthly budget. Set or update limits in Salary & Budget.</div>
+  <div id="categoryBudgetSummary"></div>
+  <div id="categoryBudgetAllocation" style="margin-top:12px"></div>
+</section><section class="card" style="margin-bottom:12px">
+  <h2>Compare months</h2>
+  <div class="row" style="margin-bottom:10px">
+    <div class="field">
+      <label>Compare count</label>
+      <select id="compareCount">
+        <option value="2">2 months</option>
+        <option value="3">3 months</option>
+      </select>
+    </div>
+  </div>
+  <div class="grid g3">
+    <div><label>Month A</label><select id="compareA"></select></div>
+    <div><label>Month B</label><select id="compareB"></select></div>
+    <div id="monthCWrap" class="hidden"><label>Month C</label><select id="compareC"></select></div>
+  </div>
+  <div id="comparison" style="margin-top:12px"></div>
+</section><div class="card" style="margin-bottom:12px"><h2>Price comparison</h2><div id="priceAnalysis"></div></div></div>
+<div class="tab" data-tab="settings"><section class="card" style="margin-bottom:12px"><h2>Google Drive sync</h2>
+<div class="muted small" style="margin-bottom:10px">Keeps one private data file in your own Google Drive (a hidden app folder only this app can see) so all your devices share the same data. It works offline and syncs when you are back online. Open the app from its https address on every device (not as a local file).</div>
+<div class="row"><div class="field"><label for="gClientId">Google client ID</label><input id="gClientId" type="text" placeholder="1234567-abc.apps.googleusercontent.com" autocomplete="off"></div><button id="gSaveId" class="btn2" type="button">Save ID</button></div>
+<div class="row" style="margin-top:10px"><button id="gConnect" class="btn" type="button">Connect / Sync now</button><button id="gDisc" class="danger" type="button">Disconnect</button></div>
+<div id="gStatus" class="status" style="margin-top:8px" aria-live="polite"></div></section><section class="card" style="margin-bottom:12px">
+  <h2>Month setup · salary · budget · limits</h2><div class="small muted" style="margin-bottom:10px">Applies to the month selected at the top of the screen.</div>
+  <div class="row">
+    <div class="field">
+      <label>Add new month</label>
+      <input id="newMonth" type="month">
+    </div>
+    <button id="addMonthBtn" class="btn" type="button">Add Month</button>
+    <button id="removeMonthBtn" class="danger" type="button">Remove Working Month</button>
+    <div class="field">
+      <label>Monthly salary (₹)</label>
+      <input id="salary" type="number" min="0" step="100" placeholder="e.g. 50000">
+    </div>
+    <div class="field">
+      <label>Allocated monthly budget (₹)</label>
+      <input id="budget" type="number" min="0" step="100">
+    </div>
+    <div class="field"><label>Category for budget limit</label><select id="limitCategory"><option>Fruits</option><option>Vegetables</option><option>Groceries</option><option>Dairy</option><option>Petrol</option><option>Personal</option><option>Pocket Money</option><option>Rent / Housing</option><option>Utilities / Bills</option><option>Transport</option><option>Health / Medical</option><option>Education</option><option>Dining / Takeaway</option><option>Dog / Cat Food</option><option>Shopping</option><option>EMI</option><option>Entertainment</option><option>Savings / Investment</option><option>Other</option></select></div><div class="field"><label>Category monthly limit (₹)</label><input id="categoryLimit" type="number" min="0" step="100" placeholder="Optional limit"></div><button id="saveBudget" class="btn2" type="button">Save Salary & Budget</button><button id="saveCategoryLimit" class="btn2" type="button">Save Category Limit</button>
+  </div>
+  <div id="monthChips" style="margin-top:10px"></div>
+</section><section class="card" style="margin-bottom:12px">
+  <h2>ChatGPT JSON import · append transactions</h2>
+  <div class="muted small" style="margin-bottom:10px">Paste JSON generated by ChatGPT to APPEND new transactions to your existing tracker. This never replaces your current data, salary, budgets or settings. Review the preview first; possible duplicates are skipped.</div>
+  <div class="field"><label for="chatgptJsonInput">ChatGPT JSON</label><textarea id="chatgptJsonInput" rows="8" placeholder='{"transactions":[{"date":"2026-11-04","name":"Petrol","category":"Petrol","amount":500,"payType":"UPI"}]}' style="width:100%;font:13px ui-monospace,monospace"></textarea></div>
+  <div class="row" style="margin-top:9px">
+    <button id="chatgptPreviewBtn" class="btn2" type="button">Review JSON</button>
+    <button id="chatgptClearBtn" class="btn2" type="button">Clear</button>
+  </div>
+  <div id="chatgptImportStatus" class="status" style="margin-top:8px" aria-live="polite"></div>
+  <div id="chatgptPreview" style="margin-top:10px"></div>
+  <div id="chatgptCommitWrap" class="hidden" style="margin-top:10px"><button id="chatgptCommitBtn" class="btn" type="button">Import reviewed transactions</button></div>
+  <div class="muted small" style="margin-top:9px">Required: date (YYYY-MM-DD), name, amount. Optional: category, entryType, payType, paidBy, familyMember, subItem, qty, unit. Amount is the total amount paid. Maximum 500 transactions per import.</div>
+</section><section class="card">
+  <h2>Backup & recovery</h2><div id="backupInfo" class="small" style="margin-bottom:8px"></div>
+  <div class="muted small" style="margin-bottom:10px">
+    Download Full Backup saves all transactions, months, salary, budgets, category limits, savings targets and tracker settings. Upload Backup File performs a FULL RESTORE and replaces the current tracker data. ChatGPT JSON import only APPENDS transactions. Before restoring, the app downloads a safety backup of your current data and asks for confirmation. Item prices are saved as total prices; unit rates are calculated automatically.
+  </div>
+  <div class="row">
+    <button id="exportBackup2" class="btn2" type="button">Download Full Backup</button>
+    <label class="file-label">Restore Full Backup (replace current data)<input id="importBackup2" type="file" accept=".json,application/json" class="hidden"></label>
+    <button id="resetSample" class="danger" type="button">Reset to Sample Data</button>
+  </div>
+</section><div class="muted small" style="margin:6px 4px 14px">Salary and budget tracking • category limits • shopping details • EMI and payment tracking • family-paid expenses • backup & restore</div></div>
+</main>
+</div>
+<script>
+const STORAGE_KEY='personal_budget_tracker_v6';
+const LEGACY_STORAGE_KEYS=['personal_budget_tracker_v5','grocery_budget_tracker_v5','grocery_budget_tracker_v4'];
+const LEGACY_STORAGE_KEY='grocery_budget_tracker_v4';
+const sample={
+  months:['2026-09','2026-08','2026-07'],
+  budgets:{'2026-09':12000,'2026-08':11000,'2026-07':10500},
+  salaries:{'2026-09':0,'2026-08':0,'2026-07':0},
+  items:[
+    {id:1,date:'2026-09-02',name:'Apple',category:'Fruits',qty:2,unit:'kg',price:180},
+    {id:2,date:'2026-09-03',name:'Banana',category:'Fruits',qty:2,unit:'kg',price:65},
+    {id:3,date:'2026-09-04',name:'Tomato',category:'Vegetables',qty:3,unit:'kg',price:48},
+    {id:4,date:'2026-09-05',name:'Potato',category:'Vegetables',qty:5,unit:'kg',price:34},
+    {id:5,date:'2026-09-07',name:'Rice',category:'Groceries',qty:10,unit:'kg',price:68},
+    {id:6,date:'2026-08-03',name:'Apple',category:'Fruits',qty:2,unit:'kg',price:165},
+    {id:7,date:'2026-08-05',name:'Tomato',category:'Vegetables',qty:3,unit:'kg',price:55},
+    {id:8,date:'2026-08-06',name:'Potato',category:'Vegetables',qty:5,unit:'kg',price:32},
+    {id:9,date:'2026-08-09',name:'Rice',category:'Groceries',qty:10,unit:'kg',price:65},
+    {id:10,date:'2026-07-02',name:'Apple',category:'Fruits',qty:2,unit:'kg',price:158},
+    {id:11,date:'2026-07-04',name:'Tomato',category:'Vegetables',qty:3,unit:'kg',price:46},
+    {id:12,date:'2026-07-09',name:'Rice',category:'Groceries',qty:10,unit:'kg',price:64}
+  ]
+};
+
+let state=loadState();
+let nextId=Math.max(0,...state.items.map(x=>Number(x.id)||0))+1;
+
+const $=id=>document.getElementById(id);
+const save=()=>{const sg=cfgSig();if(state._sig!==sg){state._sig=sg;if(!gApplying)state.cfgUpdated=Date.now()}localStorage.setItem(STORAGE_KEY,JSON.stringify(state));if(!gApplying)scheduleSync()};
+const money=n=>'₹'+Number(n||0).toLocaleString('en-IN',{maximumFractionDigits:2});
+const amount=x=>Number(x.price)||0;
+const unitRate=x=>x.unit==='No unit'?null:(Number(x.price)||0)/(Number(x.qty)||1);
+const isExpense=x=>(x.entryType||'Expense')==='Expense'&&x.category!=='EMI'&&x.category!=='Savings / Investment';
+const isEMI=x=>x.entryType==='EMI Payment'||((x.entryType||'Expense')==='Expense'&&x.category==='EMI');
+const isSavings=x=>x.entryType==='Savings / Investment'||((x.entryType||'Expense')==='Expense'&&x.category==='Savings / Investment');
+const emiTotal=a=>a.filter(isEMI).reduce((s,x)=>s+amount(x),0);
+const savingsTotal=a=>a.filter(isSavings).reduce((s,x)=>s+amount(x),0);
+const isFamilyPaid=x=>isExpense(x)&&x.paidBy==='Family member';
+const total=a=>a.filter(x=>isExpense(x)&&!isFamilyPaid(x)).reduce((s,x)=>s+amount(x),0);
+const householdTotal=a=>a.filter(isExpense).reduce((s,x)=>s+amount(x),0);
+const familyPaidTotal=a=>a.filter(isFamilyPaid).reduce((s,x)=>s+amount(x),0);
+const overspend=(spent,budget)=>Math.max(0,spent-budget);
+const incomeTotal=a=>a.filter(x=>x.entryType==='Income').reduce((s,x)=>s+amount(x),0);
+const creditTaken=a=>a.filter(x=>x.entryType==='Credit Taken').reduce((s,x)=>s+amount(x),0);
+const creditPaid=a=>a.filter(x=>x.entryType==='Credit Paid').reduce((s,x)=>s+amount(x),0);
+const creditCardPurchases=a=>a.filter(x=>(x.entryType||'Expense')==='Expense'&&x.payType==='Credit Card').reduce((s,x)=>s+amount(x),0);
+const creditCardDuePaid=a=>a.filter(x=>x.entryType==='Credit Card Due Paid').reduce((s,x)=>s+amount(x),0);
+const monthItems=m=>state.items.filter(x=>x.date.slice(0,7)===m);
+
+function loadState(){
+  try{
+    let raw=localStorage.getItem(STORAGE_KEY); if(!raw){for(const k of LEGACY_STORAGE_KEYS){raw=localStorage.getItem(k);if(raw)break}} const x=JSON.parse(raw);
+    if(x&&Array.isArray(x.items)&&x.budgets&&typeof x.budgets==='object'){
+      if(!Array.isArray(x.months))x.months=[];if(!x.salaries||typeof x.salaries!=='object')x.salaries={};if(!x.categoryLimits||typeof x.categoryLimits!=='object')x.categoryLimits={};if(!x.savingsTargets||typeof x.savingsTargets!=='object')x.savingsTargets={};
+      x.items.forEach(i=>{if((i.entryType||'Expense')==='Expense'&&i.category==='EMI')i.entryType='EMI Payment';else if((i.entryType||'Expense')==='Expense'&&i.category==='Savings / Investment')i.entryType='Savings / Investment'});
+      x.items.forEach(i=>{const m=i.date.slice(0,7);if(!x.months.includes(m))x.months.push(m);if(!i.entryType)i.entryType='Expense';if(!i.payType)i.payType='Cash';if(i.payType==='PhonePe'||i.payType==='GPay')i.payType='UPI';if(!i.unit)i.unit='piece';if(i.unit==='No unit')i.qty=1;if(!i.category)i.category='Other';if(!i.subItem)i.subItem='';if(!i.paidBy)i.paidBy='Me';if(i.paidBy!=='Family member')i.paidBy='Me';if(!i.familyMember)i.familyMember=''});
+      // One-time migration: V8.2 and earlier stored unit rate in price. V8.3 stores total price.
+      if(!x.priceIsTotal){x.items.forEach(i=>{if(i.unit!=='No unit')i.price=(Number(i.price)||0)*(Number(i.qty)||1)});x.priceIsTotal=true;}
+      Object.keys(x.budgets).forEach(m=>{if(!x.months.includes(m))x.months.push(m)});Object.keys(x.salaries).forEach(m=>{if(!x.months.includes(m))x.months.push(m)});
+      localStorage.setItem(STORAGE_KEY,JSON.stringify(x));
+      return x;
+    }
+  }catch(e){}
+  const fresh=JSON.parse(JSON.stringify(sample));fresh.items.forEach(i=>i.price*=i.qty);fresh.priceIsTotal=true;return fresh;
+}
+function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function monthName(m){const[y,mo]=m.split('-').map(Number);return new Intl.DateTimeFormat('en-IN',{month:'long',year:'numeric',timeZone:'UTC'}).format(new Date(Date.UTC(y,mo-1,1)))}
+function months(){
+  const all=new Set(state.months||[]);
+  Object.keys(state.budgets).forEach(m=>all.add(m));
+  state.items.forEach(i=>all.add(i.date.slice(0,7)));
+  return [...all].filter(m=>/^\d{4}-\d{2}$/.test(m)).sort().reverse();
+}
+function latestMap(m){const o={};monthItems(m).filter(x=>(x.entryType||'Expense')==='Expense').slice().sort((a,b)=>a.date.localeCompare(b.date)).forEach(x=>o[normalize(x.name)]=x);return o}
+function fillSelect(el,wanted){
+  const ms=months();
+  el.innerHTML=ms.map(m=>`<option value="${m}">${monthName(m)}</option>`).join('');
+  if(wanted&&ms.includes(wanted))el.value=wanted;
+}
+function refreshSelectors(){
+  const ms=months(),current=$('month').value||ms[0]||'',a=$('compareA').value||current,b=$('compareB').value||ms[1]||current,c=$('compareC').value||ms[2]||b;
+  fillSelect($('month'),current);fillSelect($('compareA'),a);fillSelect($('compareB'),b);fillSelect($('compareC'),c);
+  renderMonthChips();
+}
+function renderMonthChips(){
+  $('monthChips').innerHTML='<span class="small muted">Available months (remove a month to delete its transactions and settings):</span> '+months().map(m=>`<span class="month-chip">${monthName(m)} <button type="button" data-remove-month="${m}" title="Remove ${monthName(m)}" style="border:0;background:transparent;color:#b91c1c;cursor:pointer;font-weight:bold">×</button></span>`).join('');
+}
+function addMonth(m){
+  if(!/^\d{4}-\d{2}$/.test(m)){ $('status').textContent='Select a valid month.';return; }
+  if(!state.months.includes(m))state.months.push(m);
+  if(!(m in state.budgets))state.budgets[m]=0;
+  save();refreshSelectors();$('month').value=m;$('compareA').value=m;$('status').textContent=monthName(m)+' added. You can set a budget or add items later.';render();
+}
+
+function normalize(s){
+  let x=String(s||'').toLowerCase().trim().replace(/[^a-z0-9\s]/g,' ').replace(/\s+/g,' ');
+  if(x.endsWith('ies')&&x.length>4)x=x.slice(0,-3)+'y';
+  else if(x.endsWith('oes')&&x.length>4)x=x.slice(0,-2);
+  else if(x.endsWith('s')&&!x.endsWith('ss')&&x.length>3)x=x.slice(0,-1);
+  return x;
+}
+function levenshtein(a,b){a=normalize(a);b=normalize(b);const m=a.length,n=b.length,dp=Array.from({length:m+1},()=>Array(n+1).fill(0));for(let i=0;i<=m;i++)dp[i][0]=i;for(let j=0;j<=n;j++)dp[0][j]=j;for(let i=1;i<=m;i++)for(let j=1;j<=n;j++)dp[i][j]=Math.min(dp[i-1][j]+1,dp[i][j-1]+1,dp[i-1][j-1]+(a[i-1]===b[j-1]?0:1));return dp[m][n]}
+function similarity(a,b){a=normalize(a);b=normalize(b);if(!a||!b)return 0;if(a===b)return 1;const max=Math.max(a.length,b.length),lev=1-levenshtein(a,b)/max;const wa=new Set(a.split(' ')),wb=new Set(b.split(' '));let inter=0;wa.forEach(x=>{if(wb.has(x))inter++});return Math.max(lev,inter/(new Set([...wa,...wb]).size||1))}
+function productCatalog(){const map=new Map();state.items.forEach(i=>{const key=normalize(i.name);if(!map.has(key))map.set(key,{name:i.name,category:i.category,unit:i.unit,count:0});map.get(key).count++});return [...map.values()].sort((a,b)=>b.count-a.count)}
+function findSuggestions(name){return productCatalog().map(p=>({...p,score:similarity(name,p.name)})).filter(p=>p.score>=.55).sort((a,b)=>b.score-a.score||b.count-a.count).slice(0,5)}
+function updateDuplicateSuggestions(){
+  const name=$('name').value.trim(),box=$('duplicateBox'),warn=$('duplicateWarning');box.innerHTML='';box.classList.add('hidden');warn.classList.add('hidden');if(!name)return;
+  const sug=findSuggestions(name);if(!sug.length)return;box.classList.remove('hidden');box.innerHTML='<b class="small">Existing product suggestions:</b><div>'+sug.map(s=>`<button type="button" data-use-product="${esc(s.name)}">${esc(s.name)} · ${esc(s.category)} · ${esc(s.unit)}</button>`).join('')+'</div>';
+  if(sug[0].score>=.8){warn.classList.remove('hidden');warn.innerHTML=`Possible duplicate: <b>${esc(sug[0].name)}</b>. Use the existing product name if it is the same item.`}
+}
+
+function render(){
+  const m=$('month').value;if(!m)return;
+  const list=monthItems(m),spent=total(list),household=householdTotal(list),familySpent=familyPaidTotal(list),income=incomeTotal(list),taken=creditTaken(list),paid=creditPaid(list),budget=Number(state.budgets[m]||0),salary=Number((state.salaries||{})[m]||0),emi=emiTotal(list),saved=savingsTotal(list),target=Number((state.savingsTargets||{})[m]||0),budgetLeft=budget-spent,salaryLeft=salary-spent-emi-saved,overAmount=overspend(spent,budget),creditBalance=taken-paid,days=new Set(list.map(x=>x.date)).size;
+  $('budget').value=budget;$('salary').value=salary;
+  $('kpis').innerHTML=[['Your expenses',money(spent),list.filter(x=>isExpense(x)&&!isFamilyPaid(x)).length+' entries'],['Household expenses',money(household),`Includes ${money(familySpent)} paid by family`],['Budget left',money(budgetLeft),budgetLeft>=0?'Remaining allocation':'Allocation exceeded; negative balance',budgetLeft<0],['Available after commitments',money(salaryLeft),`${money(salary)} salary − expenses − EMI − savings`,salaryLeft<0],['Credit taken / balance',money(taken),`Paid back ${money(paid)} · Outstanding ${money(creditBalance)}`],['Credit card outstanding',money(creditCardPurchases(list)-creditCardDuePaid(list)),`Card purchases ${money(creditCardPurchases(list))} · Due paid ${money(creditCardDuePaid(list))}`]].map(([a,b,c,over])=>`<div class="kpi ${over?'over':''}"><small>${a}</small><strong>${b}</strong><small>${c}</small></div>`).join('');
+  const fixedCard=$('fixedCommitments');fixedCard.classList.toggle('goal-met',target>0&&saved>=target);fixedCard.classList.toggle('goal-missed',target>0&&saved<target);$('savingsTarget').value=target||'';$('fixedSummary').innerHTML=[['EMI paid',money(emi),'Fixed payment · excluded from expenses'],['Savings / investments',money(saved),'Contributions · excluded from expenses'],['Savings target remaining',money(Math.max(0,target-saved)),target>0?`${Math.min(100,Math.round(saved/target*100))}% of monthly target`:'Set a monthly target'],['Available after commitments',money(salaryLeft),'Salary less expenses, EMI and savings']].map(([a,b,c,over])=>`<div class="kpi ${over?'over':''}"><small>${a}</small><strong>${b}</strong><small>${c}</small></div>`).join('');const savePct=target>0?Math.min(100,Math.max(0,saved/target*100)):0;$('savingsBar').style.width=savePct+'%';$('savingsStatus').textContent=target<=0?'Set a monthly target to track your savings progress.':saved>=target?`Target achieved! You contributed ${money(saved)} against ${money(target)}.`:`${money(Math.max(0,target-saved))} left to reach your ${money(target)} target. Contributions so far: ${money(saved)}.`;
+  const pct=budget?spent/budget*100:0;$('budgetPct').textContent=budget?Math.round(pct)+'%':'—';$('budgetBar').style.width=Math.min(100,Math.max(0,pct))+'%';$('budgetBar').style.background=pct>100?'#dc2626':pct>80?'#d97706':'#2563eb';$('budgetText').textContent=`Expense budget: ${money(budget)} − eligible expenses ${money(spent)} = ${money(budgetLeft)} left. Available after commitments: ${money(salary)} − expenses ${money(spent)} − EMI ${money(emi)} − savings ${money(saved)} = ${money(salaryLeft)}. Household expenses ${money(household)} include family-paid expenses ${money(familySpent)}. Credit taken ${money(taken)} is tracked separately; credit paid ${money(paid)} reduces outstanding credit to ${money(creditBalance)}. Credit card purchases ${money(creditCardPurchases(list))} less credit card due paid ${money(creditCardDuePaid(list))} = card outstanding ${money(creditCardPurchases(list)-creditCardDuePaid(list))}.`;
+  const familyItems=list.filter(isFamilyPaid).sort((a,b)=>b.date.localeCompare(a.date));
+  $('familyExpenseSummary').innerHTML=[['Your expenses',money(spent),'Counted against your budget and salary'],['Family-paid expenses',money(familySpent),'Excluded from your budget and salary left'],['Total household expenses',money(household),'Your expenses + family-paid expenses']].map(([a,b,c])=>`<div class="kpi"><small>${a}</small><strong>${b}</strong><small>${c}</small></div>`).join('');
+  $('familyPaidBody').innerHTML=familyItems.length?familyItems.map(x=>`<tr><td>${esc(x.date)}</td><td><b>${esc(x.name)}</b>${x.subItem?`<div class="small muted">${esc(x.subItem)}</div>`:''}</td><td>${esc(x.category)}</td><td>${esc(x.familyMember||'Family member')}</td><td class="right">${money(amount(x))}</td></tr>`).join(''):'<tr><td colspan="5" class="muted">No family-paid expenses recorded for this month.</td></tr>';
+  renderCategoryBudgetAllocation(m,budget,list);
+  const q=$('search').value.trim().toLowerCase(),f=$('filter').value;
+  $('tbody').innerHTML=list.filter(x=>(!q||x.name.toLowerCase().includes(q)||(x.subItem||'').toLowerCase().includes(q))&&(f==='All'||x.category===f)).sort((x,y)=>y.date.localeCompare(x.date)).map(x=>`<tr><td>${x.date}</td><td>${esc(x.entryType||"Expense")}</td><td><b>${esc(x.name)}</b>${x.subItem?`<div class="small muted">Sub-item: ${esc(x.subItem)}</div>`:''}</td><td>${esc(x.category)}</td><td>${isFamilyPaid(x)?`Family: ${esc(x.familyMember||'Family member')}`:'Me'}</td><td>${esc(x.payType||"Cash")}</td><td class="right">${x.unit==='No unit'?'—':`${x.qty} ${esc(x.unit)}`}</td><td class="right">${money(amount(x))}</td><td class="right">${x.unit==='No unit'?'—':money(unitRate(x))+' / '+esc(x.unit)}</td><td><button type="button" class="btn2" data-edit="${x.id}">Edit</button> <button type="button" class="danger" data-delete="${x.id}">Delete</button></td></tr>`).join('');
+  const cats=[...new Set([...Array.from(document.querySelectorAll('#category option')).map(o=>o.value||o.textContent),...list.map(x=>x.category)])],vals=cats.map(c=>{const rows=list.filter(x=>x.category===c);return[c,total(rows),familyPaidTotal(rows)]}).filter(x=>x[1]>0||x[2]>0||Number((state.categoryLimits||{})[m]?.[x[0]]||0)>0),max=Math.max(1,...vals.map(x=>x[1]+x[2]));
+  $('categoryLegend').innerHTML=`<span><span style="display:inline-block;width:10px;height:10px;border-radius:3px;background:#60a5fa;margin-right:5px"></span>Your spending <b>${money(spent)}</b></span><span><span style="display:inline-block;width:10px;height:10px;border-radius:3px;background:#ec4899;margin-right:5px"></span>Family-paid <b style="color:#be185d">${money(familySpent)}</b></span><span class="muted">Household total <b>${money(household)}</b></span>`;
+  $('categorySpend').innerHTML=vals.length?vals.map(([c,v,fam])=>{const lim=Number((state.categoryLimits||{})[m]?.[c]||0),cross=lim>0&&v>lim;return `<div class="barrow" style="${cross?'background:#fee2e2;border:1px solid #ef4444;border-radius:8px;padding:7px;':''}"><span>${esc(c)}${cross?' ⚠️':''}</span><div><div class="bar" style="display:flex"><div style="width:${v/max*100}%;background:${cross?'#dc2626':'#60a5fa'}"></div><div style="width:${fam/max*100}%;background:#ec4899"></div></div><small class="muted">Limit: ${lim?money(lim):'Not set'}</small>${fam>0?`<small style="color:#be185d"> · Family paid ${money(fam)}</small>`:''}</div><b class="right">${money(v)}${fam>0?`<div class="small" style="color:#be185d;font-weight:700">+ ${money(fam)} family</div>`:''}${cross?`<div class="small" style="color:#b91c1c">Over by ${money(v-lim)}</div>`:''}</b></div>`}).join(''):'<div class="muted small">No spending data. Set a category limit above to track it.</div>';
+  renderComparison();
+  extraRender();
+}
+
+function renderCategoryBudgetAllocation(m,monthlyBudget,list){
+  const limits=(state.categoryLimits||{})[m]||{};
+  const categories=Object.entries(limits).map(([category,value])=>({category,limit:Number(value)||0,spent:total(list.filter(x=>x.category===category))})).filter(x=>x.limit>0).sort((a,b)=>a.category.localeCompare(b.category));
+  const allocated=categories.reduce((sum,x)=>sum+x.limit,0);
+  const difference=monthlyBudget-allocated;
+  const totalSpent=categories.reduce((sum,x)=>sum+x.spent,0);
+  const remaining=allocated-totalSpent;
+  const overAllocated=allocated>monthlyBudget;
+  $('categoryBudgetSummary').innerHTML=`<div class="grid g3">
+    <div class="kpi"><small>Overall monthly budget</small><strong>${money(monthlyBudget)}</strong><small>Budget allocated for this month</small></div>
+    <div class="kpi ${overAllocated?'over':''}"><small>Total category budgets</small><strong>${money(allocated)}</strong><small>${overAllocated?'Category limits exceed monthly budget':monthlyBudget>0?Math.round(allocated/monthlyBudget*100)+'% of monthly budget allocated':allocated>0?'Monthly budget not set':'No category limits set'}</small></div>
+    <div class="kpi ${difference<0?'over':''}"><small>${difference<0?'Over-allocation':'Unassigned budget'}</small><strong>${money(Math.abs(difference))}</strong><small>${difference<0?'Category budgets exceed the monthly budget':'Monthly budget minus category budgets'}</small></div>
+  </div>`;
+  if(!categories.length){$('categoryBudgetAllocation').innerHTML='<div class="muted small">No category budgets set for this month yet. Choose a category and enter its monthly limit above.</div>';return;}
+  $('categoryBudgetAllocation').innerHTML=`<div style="overflow-x:auto"><table><thead><tr><th>Category</th><th class="right">Monthly limit</th><th class="right">Spent</th><th class="right">Budget left</th><th>Usage</th></tr></thead><tbody>${categories.map(x=>{const left=x.limit-x.spent,over=x.spent>x.limit,pct=x.spent/x.limit*100;return `<tr style="${over?'background:#fef2f2;color:#991b1b':''}"><td>${esc(x.category)}${over?' ⚠️':''}</td><td class="right">${money(x.limit)}</td><td class="right">${money(x.spent)}</td><td class="right">${money(left)}</td><td><div class="bar"><div style="width:${Math.min(100,Math.max(0,pct))}%;background:${over?'#dc2626':pct>80?'#d97706':'#60a5fa'}"></div></div><small class="muted">${Math.round(pct)}% used</small></td></tr>`}).join('')}</tbody><tfoot><tr><th>Total</th><th class="right">${money(allocated)}</th><th class="right">${money(totalSpent)}</th><th class="right">${money(remaining)}</th><th></th></tr></tfoot></table></div>`;
+}
+
+function renderComparison(){
+  const count=Number($('compareCount').value),selected=[$('compareA').value,$('compareB').value];
+  if(count===3)selected.push($('compareC').value);
+  const unique=selected.filter(Boolean);
+  if(!unique.length)return;
+  const totals=unique.map(m=>({m,total:total(monthItems(m)),items:monthItems(m).length}));
+  const max=Math.max(1,...totals.map(x=>x.total));
+  $('comparison').innerHTML=`
+    <div class="grid ${count===3?'g3':'g2'}">
+      ${totals.map(x=>`<div class="kpi"><small>${monthName(x.m)}</small><strong>${money(x.total)}</strong><small>${x.items} entries</small><div class="progress" style="margin-top:8px"><div style="width:${x.total/max*100}%"></div></div></div>`).join('')}
+    </div>
+    <div class="compare-table" style="margin-top:12px">
+      <table>
+        <thead><tr><th>Item</th>${unique.map(m=>`<th class="right">${monthName(m)}</th>`).join('')}<th class="right">Trend</th></tr></thead>
+        <tbody>${comparisonRows(unique)}</tbody>
+      </table>
+    </div>`;
+}
+function comparisonRows(monthList){
+  const maps=monthList.map(latestMap);
+  const names=[...new Set(maps.flatMap(mp=>Object.keys(mp)))].sort();
+  const rows=names.map(n=>{
+    const vals=maps.map(mp=>mp[n]||null);
+    if(vals.filter(Boolean).length<2)return'';
+    const first=vals.find(Boolean),prices=vals.map(v=>v&&v.unit===first.unit?(v.unit==='No unit'?Number(v.price):unitRate(v)):null);
+    const valid=prices.filter(v=>v!==null);
+    let trend='—';
+    if(valid.length>=2){
+      const d=valid[valid.length-1]-valid[0];
+      const p=valid[0]?d/valid[0]*100:0;
+      trend=d>0?`<span class="pill up">▲ ${Math.abs(p).toFixed(1)}%</span>`:d<0?`<span class="pill down">▼ ${Math.abs(p).toFixed(1)}%</span>`:'<span class="pill same">0%</span>';
+    }
+    return `<tr><td><b>${esc(first.name)}</b><div class="small muted">${esc(first.unit)}</div></td>${prices.map(v=>`<td class="right">${v===null?'—':money(v)}</td>`).join('')}<td class="right">${trend}</td></tr>`;
+  }).join('');
+  $('priceAnalysis').innerHTML = rows ? '<div class="muted small">Detailed price comparison is shown in the comparison table above.</div>' : '<div class="muted small">No matching items across selected months.</div>';
+  return rows||`<tr><td colspan="${monthList.length+2}" class="muted">No matching items across selected months.</td></tr>`;
+}
+
+function validateBackup(data){
+  if(!data||typeof data!=='object'||!Array.isArray(data.items)||!data.budgets||typeof data.budgets!=='object')throw new Error('Invalid backup structure.');
+  const monthsArr=Array.isArray(data.months)?data.months.filter(m=>/^\d{4}-\d{2}$/.test(m)):[];
+  const items=data.items.map((x,i)=>{
+    if(!x||typeof x.name!=='string'||typeof x.date!=='string'||!/^\d{4}-\d{2}-\d{2}$/.test(x.date))throw new Error('Invalid item in backup.');
+    const qty=Number(x.qty),price=Number(x.price);if(!Number.isFinite(qty)||qty<=0||!Number.isFinite(price)||price<0)throw new Error('Invalid quantity/price in backup.');
+    const unit=String(x.unit||'piece');const totalPrice=(data.priceIsTotal?price:(unit==='No unit'?price:price*qty));
+    return{id:Number(x.id)||newId(),updatedAt:Date.now(),date:x.date,name:x.name.trim(),category:String(x.category||'Other'),qty,unit,price:totalPrice,entryType:['Income','EMI Payment','Savings / Investment','Credit Taken','Credit Paid','Credit Card Due Paid'].includes(x.entryType)?x.entryType:(x.category==='EMI'?'EMI Payment':x.category==='Savings / Investment'?'Savings / Investment':'Expense'),payType:['Cash','UPI','Sodexo','Bank Debit','Credit Card'].includes(x.payType)?x.payType:(['PhonePe','GPay'].includes(x.payType)?'UPI':'Cash'),subItem:String(x.subItem||''),paidBy:x.paidBy==='Family member'?'Family member':'Me',familyMember:x.paidBy==='Family member'?String(x.familyMember||'Family member').trim():'',};
+  });
+  const salaries={};Object.entries(data.salaries||{}).forEach(([k,v])=>{const n=Number(v);if(/^\d{4}-\d{2}$/.test(k)&&Number.isFinite(n)&&n>=0)salaries[k]=n});const budgets={};Object.entries(data.budgets).forEach(([k,v])=>{const n=Number(v);if(/^\d{4}-\d{2}$/.test(k)&&Number.isFinite(n)&&n>=0)budgets[k]=n});
+  items.forEach(i=>{const m=i.date.slice(0,7);if(!monthsArr.includes(m))monthsArr.push(m)});Object.keys(budgets).forEach(m=>{if(!monthsArr.includes(m))monthsArr.push(m)});
+  Object.keys(salaries).forEach(m=>{if(!monthsArr.includes(m))monthsArr.push(m)});const savingsTargets={};Object.entries(data.savingsTargets||{}).forEach(([k,v])=>{const n=Number(v);if(/^\d{4}-\d{2}$/.test(k)&&Number.isFinite(n)&&n>=0)savingsTargets[k]=n});Object.keys(savingsTargets).forEach(m=>{if(!monthsArr.includes(m))monthsArr.push(m)});const categoryLimits={};Object.entries(data.categoryLimits||{}).forEach(([m,limits])=>{if(/^\d{4}-\d{2}$/.test(m)&&limits&&typeof limits==='object'){categoryLimits[m]={};Object.entries(limits).forEach(([c,v])=>{const n=Number(v);if(Number.isFinite(n)&&n>=0)categoryLimits[m][c]=n});if(!monthsArr.includes(m))monthsArr.push(m)}});return{...data,items,budgets,salaries,categoryLimits,savingsTargets,months:monthsArr,priceIsTotal:true};
+}
+function exportBackup(){
+  const payload={app:'Personal Budget Tracker',version:10,exportedAt:new Date().toISOString(),data:state};
+  const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'}),url=URL.createObjectURL(blob),a=document.createElement('a');
+  a.href=url;a.download='personal-budget-backup-'+new Date().toISOString().slice(0,10)+'.json';a.click();URL.revokeObjectURL(url);localStorage.setItem(BK_KEY,String(Date.now()));$('status').textContent='Full backup downloaded.';renderBackupInfo();
+}
+function downloadBackupPayload(payload, filename){
+  const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'});
+  const url=URL.createObjectURL(blob),a=document.createElement('a');
+  a.href=url;a.download=filename;document.body.appendChild(a);a.click();a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url),1000);
+}
+function importBackupFile(file){
+  if(!file)return;const reader=new FileReader();
+  reader.onload=()=>{try{
+    const parsed=JSON.parse(reader.result);
+    if(parsed&&parsed.app&& !/personal budget tracker/i.test(String(parsed.app))) throw new Error('This backup belongs to '+parsed.app+', not Personal Budget Tracker. No data was changed.');
+    const raw=parsed&&parsed.data&&typeof parsed.data==='object'?parsed.data:parsed;
+    const restored=validateBackup(raw); // Validate completely before touching current data.
+    const label=parsed&&parsed.app?parsed.app+' V'+(parsed.version??'')+' backup':'selected compatible backup';
+    const currentPayload={app:'Personal Budget Tracker',version:10,exportedAt:new Date().toISOString(),data:state};
+    if(!confirm('FULL BACKUP RESTORE — REPLACE CURRENT DATA\n\nYou are about to replace ALL current Personal Budget Tracker data with '+label+'. This includes transactions, months, salary, budgets, category limits, savings targets and saved settings.\n\nA safety backup of the current data will be downloaded automatically if you continue.\n\nContinue with full replacement?')){$('status').textContent='Restore cancelled. Your current data was not changed.';return;}
+    downloadBackupPayload(currentPayload,'personal-budget-safety-backup-before-restore-'+new Date().toISOString().slice(0,10)+'.json');
+    const previousState=state,previousNextId=nextId;
+    try{
+      const _o=state;state=restored;nextId=Math.max(0,...state.items.map(x=>Number(x.id)||0))+1;tombRemoved(_o);save();
+    }catch(saveError){state=previousState;nextId=previousNextId;try{save()}catch(_){}throw new Error('Could not save restored backup to this browser. Previous data was retained. '+saveError.message)}
+    refreshSelectors();render();$('status').textContent=`Full backup restored: ${state.items.length} records across ${months().length} month(s). Previous data was replaced; a safety backup was downloaded.`;
+  }catch(err){$('status').textContent='Could not restore backup: '+err.message}};
+  reader.onerror=()=>{$('status').textContent='Could not read backup file.'};reader.readAsText(file);
+}
+
+
+// ChatGPT JSON import: additive, preview-first, and duplicate-aware.
+let chatgptPendingImport=[];
+function chatgptNorm(v){return String(v??'').trim().toLowerCase().replace(/\s+/g,' ')}
+function chatgptDuplicate(a,b){
+  return a.date===b.date && chatgptNorm(a.name)===chatgptNorm(b.name) &&
+    Math.abs(Number(a.amount)-Number(b.amount))<0.005 &&
+    chatgptNorm(a.payType||'Cash')===chatgptNorm(b.payType||'Cash') &&
+    chatgptNorm(a.entryType||'Expense')===chatgptNorm(b.entryType||'Expense');
+}
+function chatgptParse(){
+  const raw=$('chatgptJsonInput').value.trim();
+  if(!raw)throw new Error('Paste the JSON first.');
+  const parsed=JSON.parse(raw);
+  const rows=Array.isArray(parsed)?parsed:(parsed&&Array.isArray(parsed.transactions)?parsed.transactions:null);
+  if(!rows||!rows.length)throw new Error('JSON must contain a non-empty transactions array.');
+  if(rows.length>500)throw new Error('Import is limited to 500 transactions at a time.');
+  const validPay=['Cash','UPI','Sodexo','Bank Debit','Credit Card'];
+  const validTypes=['Expense','EMI Payment','Savings / Investment','Income','Credit Taken','Credit Paid','Credit Card Due Paid'];
+  return rows.map((x,i)=>{
+    if(!x||typeof x!=='object')throw new Error('Transaction '+(i+1)+' is not an object.');
+    const date=String(x.date||'');
+    if(!/^\d{4}-\d{2}-\d{2}$/.test(date)||Number.isNaN(Date.parse(date+'T00:00:00')))throw new Error('Transaction '+(i+1)+': use date YYYY-MM-DD.');
+    const name=String(x.name||x.description||'').trim();
+    if(!name)throw new Error('Transaction '+(i+1)+': name is required.');
+    const amount=Number(x.amount??x.totalAmount??x.amount_total);
+    if(!Number.isFinite(amount)||amount<0)throw new Error('Transaction '+(i+1)+': amount must be a non-negative number.');
+    const entryType=validTypes.includes(x.entryType)?x.entryType:'Expense';
+    const qty=Number(x.qty??x.quantity??1);
+    if(!Number.isFinite(qty)||qty<=0)throw new Error('Transaction '+(i+1)+': quantity must be greater than zero.');
+    const unit=String(x.unit||'No unit');
+    return {date,name,category:String(x.category||'Other'),amount,entryType,
+      payType:validPay.includes(x.payType)?x.payType:(['PhonePe','GPay'].includes(x.payType)?'UPI':'Cash'),
+      paidBy:x.paidBy==='Family member'?'Family member':'Me',
+      familyMember:String(x.familyMember||'').trim(),
+      subItem:String(x.subItem||''),qty,unit};
+  });
+}
+function chatgptPreviewImport(){
+  try{
+    const rows=chatgptParse();
+    const existing=state.items.map(x=>({date:x.date,name:x.name,amount:(Number(x.price)||0)*((1) )}));
+    const duplicateFlags=rows.map((r,index)=>rows.slice(0,index).some(previous=>chatgptDuplicate(r,previous))||state.items.some(x=>{
+      const existingAmount=Number(x.price||0);
+      const normalizedExisting={date:x.date,name:x.name,amount:existingAmount,payType:x.payType||'Cash',entryType:x.entryType||'Expense'};
+      return chatgptDuplicate(r,normalizedExisting);
+    }));
+    chatgptPendingImport=rows.map((r,i)=>({...r,_duplicate:duplicateFlags[i]}));
+    const fresh=chatgptPendingImport.filter(x=>!x._duplicate).length;
+    const duplicateCount=rows.length-fresh;
+    $('chatgptPreview').innerHTML='<div class="warning">Review '+rows.length+' transaction(s): '+fresh+' new and '+duplicateCount+' possible duplicate(s). Duplicates will be skipped.</div><div class="tablewrap"><table style="min-width:650px"><thead><tr><th>Date</th><th>Name</th><th>Category</th><th>Type</th><th>Payment</th><th class="right">Amount</th><th>Status</th></tr></thead><tbody>'+chatgptPendingImport.map(r=>'<tr><td>'+esc(r.date)+'</td><td>'+esc(r.name)+'</td><td>'+esc(r.category)+'</td><td>'+esc(r.entryType)+'</td><td>'+esc(r.payType)+'</td><td class="right">'+money(r.amount)+'</td><td>'+(r._duplicate?'<span class="pill up">Possible duplicate</span>':'<span class="pill down">New</span>')+'</td></tr>').join('')+'</tbody></table></div>';
+    $('chatgptCommitWrap').classList.toggle('hidden',fresh===0);
+    $('chatgptImportStatus').textContent='Preview ready. Nothing has been saved yet.';
+  }catch(err){chatgptPendingImport=[];$('chatgptPreview').innerHTML='';$('chatgptCommitWrap').classList.add('hidden');$('chatgptImportStatus').textContent='Could not review JSON: '+err.message;}
+}
+function chatgptCommitImport(){
+  const fresh=chatgptPendingImport.filter(x=>!x._duplicate);
+  if(!fresh.length){$('chatgptImportStatus').textContent='No new transactions to import.';return;}
+  let added=0;
+  fresh.forEach(r=>{
+    let importedType=r.entryType;
+    if(importedType==='Expense'&&r.category==='EMI')importedType='EMI Payment';
+    if(importedType==='Expense'&&r.category==='Savings / Investment')importedType='Savings / Investment';
+    const item={
+      id:newId(),updatedAt:Date.now(),date:r.date,name:r.name,category:importedType==='EMI Payment'?'EMI':importedType==='Savings / Investment'?'Savings / Investment':r.category,qty:importedType==='Expense'?r.qty:1,unit:importedType==='Expense'?r.unit:'No unit',
+      price:r.amount,
+      entryType:importedType,payType:r.payType,subItem:r.subItem,paidBy:r.paidBy,familyMember:r.familyMember
+    };
+    
+    state.items.push(item);
+    const m=r.date.slice(0,7);
+    if(!state.months.includes(m))state.months.push(m);
+    if(!(m in state.budgets))state.budgets[m]=0;
+    added++;
+  });
+  save();refreshSelectors();
+  const latest=fresh[fresh.length-1].date.slice(0,7);
+  if($('month'))$('month').value=latest;
+  if($('compareA'))$('compareA').value=latest;
+  render();
+  $('chatgptImportStatus').textContent='Imported '+added+' transaction(s). Existing records and budgets were preserved.';
+  chatgptPendingImport=[];$('chatgptPreview').innerHTML='';$('chatgptCommitWrap').classList.add('hidden');
+  $('chatgptJsonInput').value='';
+}
+$('chatgptPreviewBtn').addEventListener('click',chatgptPreviewImport);
+$('chatgptCommitBtn').addEventListener('click',chatgptCommitImport);
+$('chatgptClearBtn').addEventListener('click',()=>{$('chatgptJsonInput').value='';$('chatgptPreview').innerHTML='';$('chatgptImportStatus').textContent='';$('chatgptCommitWrap').classList.add('hidden');chatgptPendingImport=[];});
+
+$('addMonthBtn').addEventListener('click',()=>addMonth($('newMonth').value));
+function removeMonth(m){if(!m)return;const label=monthName(m);if(!confirm(`Remove ${label}? This permanently deletes its transactions, salary, budget, category limits and savings target from this browser. Export a backup first if needed.`))return;state.deleted=state.deleted||{};state.items.filter(i=>i.date.slice(0,7)===m).forEach(i=>state.deleted[i.id]=Date.now());state.items=state.items.filter(i=>i.date.slice(0,7)!==m);state.months=(state.months||[]).filter(x=>x!==m);delete state.budgets[m];delete state.salaries?.[m];delete state.categoryLimits?.[m];delete state.savingsTargets?.[m];save();refreshSelectors();const ms=months();if(ms.length){$('month').value=ms[0];$('compareA').value=ms[0];$('compareB').value=ms[1]||ms[0];$('compareC').value=ms[2]||ms[1]||ms[0]}render();$('status').textContent=label+' removed.'}
+$('removeMonthBtn').addEventListener('click',()=>removeMonth($('month').value));
+$('monthChips').addEventListener('click',e=>{const b=e.target.closest('[data-remove-month]');if(b)removeMonth(b.dataset.removeMonth)});
+$('itemForm').addEventListener('submit',e=>{
+  e.preventDefault();let name=$('name').value.trim();const exact=findSuggestions(name).find(s=>normalize(s.name)===normalize(name));if(exact)name=exact.name;
+  let entryType=$('entryType').value;
+  if(entryType==='Expense'&&$('category').value==='EMI')entryType='EMI Payment';else if(entryType==='Expense'&&$('category').value==='Savings / Investment')entryType='Savings / Investment';
+  if(!name)name=entryType==='Expense'?'':entryType;
+  const isExpense=entryType==='Expense';
+  const unit=isExpense?$('unit').value:'No unit';const qty=unit==='No unit'?1:Number($('qty').value);const payType=$('payType').value;const paidBy=isExpense?$('paidBy').value:'Me';const familyMember=paidBy==='Family member'?$('familyMember').value.trim():'';if(paidBy==='Family member'&&!familyMember){$('status').textContent='Enter the family member name for a family-paid expense.';$('familyMember').focus();return}const item={id:newId(),updatedAt:Date.now(),date:$('date').value,name,subItem:$('subItem').value.trim(),entryType,payType,paidBy,familyMember,category:isExpense?$('category').value:(entryType==='Income'?$('category').value:(entryType==='EMI Payment'?'EMI':entryType==='Savings / Investment'?'Savings / Investment':entryType==='Credit Card Due Paid'?'Credit Card':'Credit')),qty,unit,price:Number($('price').value)};
+  if(entryType==='Credit Card Due Paid'){const outstanding=creditCardPurchases(monthItems(item.date.slice(0,7)).filter(x=>x.id!==editingId))-creditCardDuePaid(monthItems(item.date.slice(0,7)).filter(x=>x.id!==editingId));if(outstanding<=0){$('status').textContent='Cannot pay credit card due: there are no credit-card purchases/outstanding dues for this month.';return}if(Number(item.price)>outstanding){$('status').textContent=`Payment exceeds card outstanding (${money(outstanding)}). Enter an amount up to the outstanding due.`;return}}
+  if(!item.date||!item.name||!Number.isFinite(item.price)||item.price<=0||(unit!=='No unit'&&(!Number.isFinite(item.qty)||item.qty<=0))){$('status').textContent='Enter a date, description, positive amount, and a valid quantity when a unit is selected.';return}
+  const wasEdit=editingId!==null;if(wasEdit){item.id=editingId;const ix=state.items.findIndex(x=>x.id===editingId);if(ix>=0)state.items[ix]=item;else state.items.push(item)}else{nextId++;state.items.push(item)}
+  const m=item.date.slice(0,7);if(!state.months.includes(m))state.months.push(m);if(!(m in state.budgets))state.budgets[m]=0;save();refreshSelectors();$('month').value=m;$('compareA').value=m;$('name').value='';$('subItem').value='';$('price').value='';$('paidBy').value='Me';$('familyMember').value='';syncPaidByFields();updateDuplicateSuggestions();$('status').textContent=item.entryType+' · '+item.name+(wasEdit?' updated.':' added. Budget adjusted.');afterSubmit(wasEdit);render()
+});
+$('unit').addEventListener('change',()=>{$('qty').disabled=$('unit').value==='No unit';$('qty').required=$('unit').value!=='No unit';$('priceLabel').textContent=$('unit').value==='No unit'?'Total amount (₹)':'Total price (₹)';if($('unit').value==='No unit')$('qty').value='';else if(!$('qty').value)$('qty').value='1'});
+$('entryType').addEventListener('change',()=>{const selectedType=$('entryType').value;if(selectedType==='EMI Payment')$('category').value='EMI';else if(selectedType==='Savings / Investment')$('category').value='Savings / Investment';const nonExpense=selectedType!=='Expense';$('unit').disabled=nonExpense;$('qty').disabled=nonExpense||$('unit').value==='No unit';$('qty').required=!nonExpense&&$('unit').value!=='No unit';$('priceLabel').textContent=nonExpense||$('unit').value==='No unit'?'Total amount (₹)':'Total price (₹)';syncPaidByFields()});
+function syncPaidByFields(){const expense=$('entryType').value==='Expense',family=expense&&$('paidBy').value==='Family member';$('paidByWrap').classList.toggle('hidden',!expense);$('familyMemberWrap').classList.toggle('hidden',!family);$('familyMember').required=family;if(!family)$('familyMember').value=''}
+$('paidBy').addEventListener('change',syncPaidByFields);
+$('name').addEventListener('input',updateDuplicateSuggestions);
+$('duplicateBox').addEventListener('click',e=>{const b=e.target.closest('[data-use-product]');if(!b)return;const name=b.dataset.useProduct,c=productCatalog().find(x=>x.name===name);$('name').value=name;if(c){$('category').value=c.category;$('unit').value=c.unit}updateDuplicateSuggestions()});
+$('saveCategoryLimit').addEventListener('click',()=>{const m=$('month').value,c=$('limitCategory').value,n=Number($('categoryLimit').value);if(!Number.isFinite(n)||n<0){$('status').textContent='Enter a valid non-negative category limit.';return}state.categoryLimits=state.categoryLimits||{};state.categoryLimits[m]=state.categoryLimits[m]||{};state.categoryLimits[m][c]=n;save();$('status').textContent=`${c} monthly limit saved for ${monthName(m)}.`;render()});
+$('limitCategory').addEventListener('change',()=>{const m=$('month').value;$('categoryLimit').value=(state.categoryLimits||{})[m]?.[$('limitCategory').value]??''});
+$('saveSavingsTarget').addEventListener('click',()=>{const raw=$('savingsTarget').value,n=Number(raw);if(raw.trim()===''||!Number.isFinite(n)||n<0){$('status').textContent='Enter a valid monthly savings target (zero or more).';return}const m=$('month').value;state.savingsTargets=state.savingsTargets||{};state.savingsTargets[m]=n;if(!state.months.includes(m))state.months.push(m);save();$('status').textContent=`Savings target ${money(n)} saved for ${monthName(m)}.`;render()});
+$('saveBudget').addEventListener('click',()=>{const n=Number($('budget').value),sal=Number($('salary').value);if(!Number.isFinite(n)||n<0||!Number.isFinite(sal)||sal<0){$('status').textContent='Enter valid non-negative salary and budget values.';return}const m=$('month').value;state.budgets[m]=n;state.salaries=state.salaries||{};state.salaries[m]=sal;if(!state.months.includes(m))state.months.push(m);save();$('status').textContent='Salary and allocated budget saved separately.';render()});
+$('tbody').addEventListener('click',e=>{const b=e.target.closest('[data-delete]');if(!b)return;if(!confirm('Delete this entry? This cannot be undone.'))return;if(editingId===Number(b.dataset.delete))endEdit();(state.deleted=state.deleted||{})[Number(b.dataset.delete)]=Date.now();state.items=state.items.filter(x=>x.id!==Number(b.dataset.delete));save();render()});
+$('compareCount').addEventListener('change',()=>{$('monthCWrap').classList.toggle('hidden',$('compareCount').value!=='3');renderComparison()});
+['month','compareA','compareB','compareC','filter'].forEach(id=>$(id).addEventListener('change',()=>{if(id==='month')$('categoryLimit').value=(state.categoryLimits||{})[$('month').value]?.[$('limitCategory').value]??'';render()}));
+$('search').addEventListener('input',render);
+$('exportBackup2').addEventListener('click',exportBackup);
+$('importBackup2').addEventListener('change',e=>{importBackupFile(e.target.files[0]);e.target.value=''});
+$('resetSample').addEventListener('click',()=>{if(confirm('Reset all current data to sample data? Download a backup first if needed.')){const _o=state;state=JSON.parse(JSON.stringify(sample));state.categoryLimits={};state.savingsTargets={};nextId=13;state.items.forEach(i=>{i.id=newId();i.updatedAt=Date.now()});tombRemoved(_o);save();refreshSelectors();render();$('status').textContent='Sample data restored.'}});
+
+
+// ===== V9 layout: tabs, quick add, edit, recent entries, daily allowance =====
+let editingId=null,chipData=[];
+const PREF_KEY='pbt_ui_prefs_v1',BK_KEY='pbt_last_backup';
+function showTab(t){document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('active',x.dataset.tab===t));document.querySelectorAll('#tabs button').forEach(b=>b.classList.toggle('active',b.dataset.go===t));window.scrollTo(0,0)}
+function stepMonth(d){const sel=$('month'),i=sel.selectedIndex+d;if(i<0||i>=sel.options.length)return;sel.selectedIndex=i;sel.dispatchEvent(new Event('change'))}
+function setForm(id,val,fire){$(id).value=val;if(fire)$(id).dispatchEvent(new Event('change'))}
+function startEdit(id){
+  const x=state.items.find(i=>i.id===id);if(!x)return;editingId=id;
+  setForm('entryType',x.entryType||'Expense',true);
+  $('date').value=x.date;$('name').value=x.name;$('subItem').value=x.subItem||'';
+  if([...$('category').options].some(o=>o.value===x.category))$('category').value=x.category;
+  $('payType').value=x.payType||'Cash';setForm('paidBy',x.paidBy||'Me',true);$('familyMember').value=x.familyMember||'';
+  setForm('unit',x.unit||'No unit',true);if(x.unit!=='No unit')$('qty').value=x.qty;
+  $('price').value=x.price;$('editBanner').classList.remove('hidden');$('submitBtn').textContent='Save changes';
+  $('itemForm').classList.add('show-adv');$('advToggle').textContent='Fewer options ▴';showTab('add');$('status').textContent='Editing: '+x.name;
+}
+function endEdit(){editingId=null;$('editBanner').classList.add('hidden');$('submitBtn').textContent='Add Item';setForm('entryType','Expense',true)}
+function afterSubmit(wasEdit){if(wasEdit){endEdit();showTab('entries');return}try{localStorage.setItem(PREF_KEY,JSON.stringify({payType:$('payType').value,category:$('category').value}))}catch(e){}}
+function renderChips(){
+  const mp=new Map();state.items.filter(x=>(x.entryType||'Expense')==='Expense').forEach(x=>{const k=normalize(x.name),o=mp.get(k)||{name:x.name,n:0};o.n++;o.category=x.category;o.unit=x.unit;o.payType=x.payType;mp.set(k,o)});
+  chipData=[...mp.values()].sort((a,b)=>b.n-a.n).slice(0,8);
+  $('quickChips').innerHTML=chipData.length?'<div class="small muted" style="margin-bottom:4px">Frequent items — tap to fill</div>'+chipData.map((c,i)=>`<button type="button" class="chip" data-chip="${i}">${esc(c.name)}</button>`).join(''):'';
+}
+function renderBackupInfo(){
+  const lb=Number(localStorage.getItem(BK_KEY)||0),old=!lb||Date.now()-lb>14*864e5;
+  $('backupInfo').textContent=lb?'Last full backup downloaded: '+new Date(lb).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'}):'No full backup downloaded from this browser yet.';
+  $('backupReminder').innerHTML=state.items.length&&old?'<div class="warning" style="margin:0 0 12px">Backup reminder: your data lives only in this browser. <button type="button" class="btn2" data-go="settings" style="min-height:34px;padding:5px 10px">Open backup</button></div>':'';
+}
+function extraRender(){
+  const m=$('month').value,list=monthItems(m),nowD=new Date(),pad=n=>String(n).padStart(2,'0'),todayStr=nowD.getFullYear()+'-'+pad(nowD.getMonth()+1)+'-'+pad(nowD.getDate()),cm=nowD.getFullYear()+'-'+pad(nowD.getMonth()+1);
+  const [y,mo]=m.split('-').map(Number),dim=new Date(y,mo,0).getDate(),daysLeft=m===cm?dim-nowD.getDate()+1:(m>cm?dim:0);
+  const budget=Number(state.budgets[m]||0),left=budget-total(list);let allow,note;
+  if(!budget){allow='—';note='Set a monthly budget in Settings'}else if(!daysLeft){allow='—';note='This month is over'}else if(left<=0){allow=money(0);note='Budget used up'}else{allow=money(left/daysLeft);note=daysLeft+' day(s) left incl. today'}
+  const target=Number((state.savingsTargets||{})[m]||0),saved=savingsTotal(list);
+  const k=(a,b,c)=>`<div class="kpi"><small>${a}</small><strong>${b}</strong><small>${c}</small></div>`;
+  $('todayCard').innerHTML=k('Spent today',money(total(state.items.filter(x=>x.date===todayStr))),'Your expenses today')+k('Daily allowance',allow,note)+k('Savings this month',money(saved),target?'of '+money(target)+' target':'No target set');
+  const rec=state.items.slice().sort((a,b)=>b.date.localeCompare(a.date)||b.id-a.id).slice(0,5);
+  $('recentList').innerHTML=rec.length?rec.map(x=>{const fam=isFamilyPaid(x),cls=fam?'fam':(x.entryType==='Income'?'inc':'');return `<div class="recent"><div><b>${esc(x.name)}</b><div class="small muted">${x.date} · ${esc(x.entryType&&x.entryType!=='Expense'?x.entryType:x.category)} · ${esc(x.payType||'Cash')}${fam?' · <span class="fam">Family: '+esc(x.familyMember||'Family member')+'</span>':''}</div></div><div style="white-space:nowrap"><b class="${cls}">${money(amount(x))}</b> <button type="button" class="btn2" data-edit="${x.id}" style="min-height:34px;padding:5px 10px">Edit</button></div></div>`}).join(''):'<div class="muted small">No entries yet. Use the Add tab.</div>';
+  renderChips();renderBackupInfo();
+}
+document.addEventListener('click',e=>{const g=e.target.closest('[data-go]');if(g){showTab(g.dataset.go);return}const ed=e.target.closest('[data-edit]');if(ed){startEdit(Number(ed.dataset.edit));return}const ch=e.target.closest('[data-chip]');if(ch){const c=chipData[Number(ch.dataset.chip)];if(!c)return;$('name').value=c.name;if([...$('category').options].some(o=>o.value===c.category))$('category').value=c.category;setForm('unit',c.unit||'piece',true);if([...$('payType').options].some(o=>o.value===c.payType))$('payType').value=c.payType;$('price').focus()}});
+$('prevMonth').addEventListener('click',()=>stepMonth(1));$('nextMonth').addEventListener('click',()=>stepMonth(-1));
+$('advToggle').addEventListener('click',()=>{const on=$('itemForm').classList.toggle('show-adv');$('advToggle').textContent=on?'Fewer options ▴':'More options ▾'});
+$('cancelEdit').addEventListener('click',()=>{endEdit();['name','subItem','price','familyMember'].forEach(i=>$(i).value='');setForm('paidBy','Me',true);$('status').textContent='Edit cancelled.'});
+(function(){let p={};try{p=JSON.parse(localStorage.getItem(PREF_KEY))||{}}catch(e){}if(p.payType&&[...$('payType').options].some(o=>o.value===p.payType))$('payType').value=p.payType;if(p.category&&[...$('category').options].some(o=>o.value===p.category))$('category').value=p.category})();
+
+
+// ===== V10: Google Drive sync (private appDataFolder file, offline-first, merge-based) =====
+const GOOGLE_CLIENT_ID='';
+const G_SCOPE='https://www.googleapis.com/auth/drive.appdata',G_FILE='budget-data.json';
+let gTok=null,gExp=0,gBusy=false,gAgain=false,gTimer=null,gApplying=false,_lastId=0,gLast='';
+function newId(){let v=Date.now()*1000+Math.floor(Math.random()*1000);if(v<=_lastId)v=_lastId+1;_lastId=v;return v}
+function cfgSig(){return JSON.stringify([state.months,state.budgets,state.salaries,state.categoryLimits,state.savingsTargets])}
+function tombRemoved(o){state.deleted=Object.assign({},o.deleted||{},state.deleted||{});const keep=new Set(state.items.map(x=>x.id));o.items.forEach(x=>{if(!keep.has(x.id))state.deleted[x.id]=Date.now()})}
+function ensureUniqueIds(){state.items.forEach(i=>{if(i.id<1e12)i.id=newId()});nextId=newId()}
+function mergeStates(a,b){
+  const del={};[b.deleted||{},a.deleted||{}].forEach(d=>Object.keys(d).forEach(k=>del[k]=Math.max(del[k]||0,d[k])));
+  const mp=new Map();[...(b.items||[]),...a.items].forEach(i=>{const o=mp.get(i.id);if(!o||(i.updatedAt||0)>=(o.updatedAt||0))mp.set(i.id,i)});
+  const items=[...mp.values()].filter(i=>!(del[i.id]&&del[i.id]>=(i.updatedAt||0)));
+  const w=(a.cfgUpdated||0)>=(b.cfgUpdated||0)?a:b,ms=new Set(w.months||[]);items.forEach(i=>ms.add(i.date.slice(0,7)));
+  return{items,deleted:del,months:[...ms],budgets:{...(w.budgets||{})},salaries:{...(w.salaries||{})},categoryLimits:JSON.parse(JSON.stringify(w.categoryLimits||{})),savingsTargets:{...(w.savingsTargets||{})},priceIsTotal:true,cfgUpdated:Math.max(a.cfgUpdated||0,b.cfgUpdated||0)};
+}
+const gClientId=()=>(localStorage.getItem('pbt_gclient')||GOOGLE_CLIENT_ID||'').trim();
+const gConnected=()=>!!gClientId()&&localStorage.getItem('pbt_gconnected')==='1';
+function setSync(k,msg){
+  const t={off:'☁ Set up',busy:'☁ Syncing…',pend:'☁ Saving…',ok:'☁ Synced ✓',err:'☁ Tap to sync'}[k];$('syncBtn').textContent=t;
+  if(k==='ok')gLast=new Date().toLocaleTimeString('en-IN',{hour:'numeric',minute:'2-digit'});
+  $('gStatus').textContent=k==='ok'?'Last synced at '+gLast+'. Your data is up to date in Google Drive.':k==='err'?'Not synced: '+(msg||'error')+' Your data is safe on this device.':k==='off'?'Not connected. Paste your client ID, press Save ID, then Connect.':k==='busy'?'Syncing…':'Changes will sync in a moment…';
+}
+function gLoad(){return new Promise((res,rej)=>{if(window.google&&google.accounts&&google.accounts.oauth2)return res();const sc=document.createElement('script');sc.src='https://accounts.google.com/gsi/client';sc.onload=res;sc.onerror=()=>rej(new Error('Could not load Google sign-in (offline?).'));document.head.appendChild(sc)})}
+function gToken(interactive){return new Promise(async(res,rej)=>{
+  if(gTok&&Date.now()<gExp-60000)return res(gTok);
+  if(!gClientId())return rej(new Error('Add your Google client ID first.'));
+  if(!/^https?:$/.test(location.protocol))return rej(new Error('Open the app from its https address, not as a local file.'));
+  try{await gLoad()}catch(e){return rej(e)}
+  google.accounts.oauth2.initTokenClient({client_id:gClientId(),scope:G_SCOPE,
+    callback:r=>{if(r.error)return rej(new Error(r.error));gTok=r.access_token;gExp=Date.now()+(Number(r.expires_in)||3600)*1000;localStorage.setItem('pbt_gconnected','1');res(gTok)},
+    error_callback:e=>rej(new Error((e&&e.type)||'popup_closed'))}).requestAccessToken({prompt:interactive?'':'none'});
+})}
+async function gApi(url,opt={}){const t=await gToken(false),r=await fetch(url,{...opt,headers:{Authorization:'Bearer '+t,...(opt.headers||{})}});if(r.status===401){gTok=null;throw new Error('Session expired.')}if(!r.ok)throw new Error('Drive error '+r.status+'.');return r}
+async function syncNow(interactive){
+  if(gBusy){gAgain=true;return}gBusy=true;setSync('busy');
+  try{
+    await gToken(!!interactive);
+    const base='https://www.googleapis.com/drive/v3/files';
+    const lr=await(await gApi(base+'?spaces=appDataFolder&q='+encodeURIComponent("name='"+G_FILE+"'")+'&fields=files(id)')).json();
+    const id=lr.files&&lr.files[0]?lr.files[0].id:null;let remote=null;
+    if(id){const j=await(await gApi(base+'/'+id+'?alt=media')).json();remote=j.data||j}
+    ensureUniqueIds();let out=state;
+    if(remote&&Array.isArray(remote.items)){
+      const first=!localStorage.getItem('pbt_gsynced');
+      if(first&&state.items.length&&!confirm('Google Drive already has budget data.\n\nOK = merge it with the data on this device.\nCancel = use the Drive data only (replaces this device).'))out=mergeStates({items:[],deleted:{},cfgUpdated:0},remote);
+      else out=mergeStates(state,remote);
+    }
+    gApplying=true;state=out;state._sig=cfgSig();save();gApplying=false;
+    const body=JSON.stringify({app:'Personal Budget Tracker',version:10,exportedAt:new Date().toISOString(),data:state});
+    if(id)await gApi('https://www.googleapis.com/upload/drive/v3/files/'+id+'?uploadType=media',{method:'PATCH',headers:{'Content-Type':'application/json'},body});
+    else{const bd='pbt'+Date.now();await gApi('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id',{method:'POST',headers:{'Content-Type':'multipart/related; boundary='+bd},body:'--'+bd+'\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n'+JSON.stringify({name:G_FILE,parents:['appDataFolder']})+'\r\n--'+bd+'\r\nContent-Type: application/json\r\n\r\n'+body+'\r\n--'+bd+'--'})}
+    localStorage.setItem('pbt_gsynced',String(Date.now()));refreshSelectors();render();setSync('ok');
+  }catch(e){gApplying=false;let m=e.message||'error.';if(/interaction|popup|immediate|access_denied/.test(m))m='Sign-in needed — tap ☁ to reconnect.';setSync('err',m)}
+  finally{gBusy=false;if(gAgain){gAgain=false;scheduleSync()}}
+}
+function scheduleSync(){if(!gConnected())return;clearTimeout(gTimer);setSync('pend');gTimer=setTimeout(()=>syncNow(false),2500)}
+function gClick(){if(!gClientId()){showTab('settings');$('status').textContent='Add your Google client ID in Settings to turn on sync.';return}syncNow(true)}
+$('syncBtn').addEventListener('click',gClick);$('gConnect').addEventListener('click',gClick);
+$('gSaveId').addEventListener('click',()=>{localStorage.setItem('pbt_gclient',$('gClientId').value.trim());$('status').textContent='Client ID saved. Press Connect / Sync now.'});
+$('gDisc').addEventListener('click',()=>{try{if(gTok&&window.google)google.accounts.oauth2.revoke(gTok,()=>{})}catch(e){}gTok=null;['pbt_gconnected','pbt_gsynced'].forEach(k=>localStorage.removeItem(k));setSync('off');$('status').textContent='Disconnected from Google Drive. Your data stays on this device and in Drive.'});
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&gConnected())syncNow(false)});
+window.addEventListener('online',()=>{if(gConnected())syncNow(false)});
+$('gClientId').value=localStorage.getItem('pbt_gclient')||GOOGLE_CLIENT_ID;
+state.deleted=state.deleted||{};state.items.forEach(i=>{if(!i.updatedAt)i.updatedAt=1});state._sig=cfgSig();
+setSync('off');if(gConnected())syncNow(false);
+
+const now=new Date(),today=[now.getFullYear(),String(now.getMonth()+1).padStart(2,'0'),String(now.getDate()).padStart(2,'0')].join('-');
+$('date').value=today;$('newMonth').value=today.slice(0,7);
+refreshSelectors();syncPaidByFields();render();
+</script>
+</body>
+</html>
